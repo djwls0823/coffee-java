@@ -1,9 +1,7 @@
 package com.cafe.coffeejava.user.account;
 
 import com.cafe.coffeejava.common.model.ResultResponse;
-import com.cafe.coffeejava.user.account.model.UserSignInReq;
-import com.cafe.coffeejava.user.account.model.UserSignInRes;
-import com.cafe.coffeejava.user.account.model.UserSignUpReq;
+import com.cafe.coffeejava.user.account.model.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +20,7 @@ public class UserAccountController {
     public ResultResponse<Integer> postUser(@RequestBody UserSignUpReq req) {
         int result = userAccountService.postUser(req);
         return ResultResponse.<Integer>builder()
+                             .statusCode(String.valueOf(HttpServletResponse.SC_CREATED))
                              .resultMsg("회원가입 완료")
                              .resultData(result)
                              .build();
@@ -32,8 +31,20 @@ public class UserAccountController {
     public ResultResponse<UserSignInRes> loginUser(@RequestBody UserSignInReq req, HttpServletResponse response) {
         UserSignInRes res =  userAccountService.loginUser(req, response);
         return ResultResponse.<UserSignInRes>builder()
+                             .statusCode(String.valueOf(HttpServletResponse.SC_OK))
                              .resultMsg("로그인 성공")
                              .resultData(res)
+                             .build();
+    }
+
+    @PatchMapping
+    @Operation(summary = "유저 계정 탈퇴")
+    public ResultResponse<Integer> patchUser(@RequestBody UserPatchReq req) {
+        int result =  userAccountService.patchUser(req);
+        return ResultResponse.<Integer>builder()
+                             .statusCode(String.valueOf(HttpServletResponse.SC_OK))
+                             .resultMsg("계정 탈퇴 성공")
+                             .resultData(result)
                              .build();
     }
 }

@@ -6,13 +6,12 @@ import com.cafe.coffeejava.config.constant.JwtConst;
 import com.cafe.coffeejava.config.jwt.JwtTokenProvider;
 import com.cafe.coffeejava.config.jwt.JwtUser;
 import com.cafe.coffeejava.config.security.AuthenticationFacade;
-import com.cafe.coffeejava.user.account.model.UserSignInReq;
-import com.cafe.coffeejava.user.account.model.UserSignInRes;
-import com.cafe.coffeejava.user.account.model.UserSignUpReq;
+import com.cafe.coffeejava.user.account.model.*;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +23,9 @@ public class UserAccountService {
     private final JwtTokenProvider jwtTokenProvider;
     private final CookieUtils  cookieUtils;
     private final AuthenticationFacade  authenticationFacade;
+    private final PasswordEncoder passwordEncoder;
 
+    // 회원가입
     public int postUser(UserSignUpReq req) {
         req.setPassword(BCrypt.hashpw(req.getPassword(), BCrypt.gensalt()));
 
@@ -39,6 +40,7 @@ public class UserAccountService {
         return userAccountMapper.insUser(req);
     }
 
+    // 로그인
     @Transactional
     public UserSignInRes loginUser(UserSignInReq req, HttpServletResponse response) {
         UserSignInRes res = userAccountMapper.selUserByEmail(req.getEmail());
@@ -63,5 +65,24 @@ public class UserAccountService {
         res.setAccessToken(accessToken);
 
         return res;
+    }
+
+    // 유저 탈퇴
+    public int patchUser(UserPatchReq req) {
+        Long loginUserId = authenticationFacade.getSignedUserId();
+
+        if (!loginUserId.equals(req.getUserId())) {
+            throw new CustomException("계정 탈퇴 권한이 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        // 유저 정보 조회
+        UserPatchRes userInfo = userAccountMapper.selUserInfoByUserId(req.getUserId());
+
+        // 비밀번호 확인
+        if (!passwordEncoder.matches(req.getPassword(), userInfo.getPassword())) {
+            throw new CustomException("비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        return userAccountMapper.updateUser(req);
     }
 }

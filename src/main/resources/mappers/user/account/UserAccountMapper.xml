@@ -30,4 +30,21 @@
           FROM user
          WHERE email = #{email}
     </select>
+
+    <update id="updateUser">
+        UPDATE user
+           SET email = CONCAT('deletedEmail_', #{userId})
+             , `password` = 'deletedPassword'
+             , `name` = '탈퇴회원'
+             , nickname = CONCAT('deletedNickname_', #{userId})
+             , user_pic = NULL
+             , user_status = 1
+         WHERE user_id = #{userId}
+    </update>
+
+    <select id="selUserInfoByUserId">
+        SELECT *
+          FROM user
+         WHERE user_id = #{userId}
+    </select>
 </mapper>
