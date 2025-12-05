@@ -32,8 +32,8 @@ public class UserAccountController {
 
     @PostMapping("/sign-in")
     @Operation(summary = "유저 로그인")
-    public ResultResponse<UserSignInRes> loginUser(@RequestBody UserSignInReq req, HttpServletResponse response) {
-        UserSignInRes res =  userAccountService.loginUser(req, response);
+    public ResultResponse<UserSignInRes> loginUser(@RequestBody UserSignInReq req, @RequestParam(defaultValue = "false") boolean isAdminPage, HttpServletResponse response) {
+        UserSignInRes res =  userAccountService.loginUser(req, isAdminPage, response);
         return ResultResponse.<UserSignInRes>builder()
                              .statusCode(String.valueOf(HttpServletResponse.SC_OK))
                              .resultMsg("로그인 성공")
