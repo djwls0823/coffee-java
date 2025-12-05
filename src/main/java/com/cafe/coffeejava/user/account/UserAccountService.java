@@ -50,7 +50,7 @@ public class UserAccountService {
 
     // 로그인
     @Transactional
-    public UserSignInRes loginUser(UserSignInReq req, HttpServletResponse response) {
+    public UserSignInRes loginUser(UserSignInReq req, boolean isAdminPage, HttpServletResponse response) {
         UserSignInRes res = userAccountMapper.selUserByEmail(req.getEmail());
 
         if (res == null || !BCrypt.checkpw(req.getPassword(), res.getPassword())) {
@@ -59,6 +59,13 @@ public class UserAccountService {
 
         if (res.getUserStatus() == 1) {
             throw new CustomException("비활성화 된 계정입니다.", HttpStatus.FORBIDDEN);
+        }
+
+        // 유저 로그인인지 관리자 로그인인지 구분
+        if (isAdminPage && res.getRole() != 1) {
+            throw new CustomException("관리자 권한이 없습니다.", HttpStatus.FORBIDDEN);
+        } else if (!isAdminPage && res.getRole() != 0) {
+            throw new CustomException("유저 권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
 
         JwtUser jwtUser = new JwtUser();
