@@ -2,11 +2,13 @@ package com.cafe.coffeejava.board;
 
 import com.cafe.coffeejava.board.model.*;
 import com.cafe.coffeejava.common.exception.CustomException;
+import com.cafe.coffeejava.common.model.Paging;
 import com.cafe.coffeejava.config.security.AuthenticationFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,18 +32,13 @@ public class BoardService {
             return boardMapper.insBoard(p);
     }
 
-    public List<BoardGetRes> getBoard(Long userId) {
-        if(userId == null) {
-            throw new CustomException("유저 ID가 없습니다.", HttpStatus.NOT_FOUND);
-        }
-        List<BoardGetRes> boardList = boardMapper.getBoard(userId);
-
-        if(boardList == null || boardList.isEmpty()) {
-            throw new CustomException("해당 유저의 공지사항이 없습니다.", HttpStatus.NOT_FOUND);
-        }
+    @Transactional
+    public List<BoardGetRes> getBoard(Paging p) {
+        List<BoardGetRes> boardList = boardMapper.getBoard(p);
         return boardList;
     }
 
+    @Transactional
     public List<BoardDetailGetRes> getBoardDetail(Long boardId) {
         if(boardId == null) {
             throw new CustomException("공지사항 ID가 없습니다.", HttpStatus.NOT_FOUND);
@@ -56,7 +53,7 @@ public class BoardService {
     }
 
     public int patchBoard(BoardPutReq p) {
-            Long userId = boardMapper.findUserIdByBoardId(p.getBoardId());
+            Long userId = boardMapper.findUserIdByBoard(p.getBoardId());
             Long signedUserId = authenticationFacade.getSignedUserId();
 
             if(p.getBoardId() == null) {
@@ -74,21 +71,17 @@ public class BoardService {
             return boardMapper.patchBoard(p);
     }
 
-    public int delBoard(Long boardId, Long userId) {
-        Long userIdByBoardId = boardMapper.findUserIdByBoardId(boardId);
+    public int delBoard(Long boardId) {
+        Long userId = boardMapper.findUserIdByBoard(boardId);
         Long signedUserId = authenticationFacade.getSignedUserId();
 
         if(boardId == null) {
             throw new CustomException("공지사항이 존재하지 않습니다.", HttpStatus.NOT_FOUND);
         }
 
-        if(!userId.equals(userIdByBoardId)) {
-            throw new CustomException("작성자만 삭제할 수 있습니다.", HttpStatus.FORBIDDEN);
-        }
-
         if(!signedUserId.equals(userId)) {
-            throw new CustomException("로그인된 사용자만 삭제할 수 있습니다.", HttpStatus.FORBIDDEN);
+            throw new CustomException("삭제할 권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
-        return boardMapper.delBoard(boardId, userId);
+        return boardMapper.delBoard(boardId);
     }
 }

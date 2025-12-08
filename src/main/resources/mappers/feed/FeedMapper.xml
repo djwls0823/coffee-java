@@ -26,6 +26,8 @@
         LEFT JOIN likes C
         ON A.feed_id = C.feed_id
         GROUP BY A.feed_id, title, nickname, DATE(A.created_at), view_count
+        ORDER BY A.feed_id DESC
+        LIMIT #{startIdx}, #{size}
     </select>
 
     <select id="getFeedListByDistrict">
@@ -38,10 +40,45 @@
         ON A.feed_id = C.feed_id
         WHERE A.district_id = #{districtId}
         GROUP BY A.feed_id, title, nickname, DATE(A.created_at), view_count
+        LIMIT #{startIdx}, #{size}
     </select>
 
-    <select id="getFeedDetailList">
+    <!-- <select id="findUserIdByFeed">
+        SELECT user_id
+        FROM feed
+        WHERE feed_id = #{feedId}
+    </select> -->
+    
+    <resultMap id="feedDetailMap" type="com.cafe.coffeejava.feed.model.FeedGetDetailDto">
+        <id property="feedId" column="feedId"/>
+        <result property="title" column="title"/>
+        <result property="nickname" column="nickname"/>
+        <result property="cafeName" column="cafeName"/>
+        <result property="createdAt" column="createdAt"/>
+        <result property="content" column="content"/>
+        <result property="viewCount" column="viewCount"/>
+        <result property="feedLike" column="feedLike"/>
+        
+        <collection property="pics" ofType="string">
+            <result column="pics"/>
+        </collection>
+    </resultMap>
 
+    <select id="getFeedDetailList" resultMap="feedDetailMap">
+        SELECT A.feed_id AS feedId, A.title, B.nickname, A.cafe_name AS cafeName,
+        A.content, A.created_at AS createdAt, A.view_count AS viewCount,
+        IFNULL(C.like_count, 0) AS feedLike, D.feed_pic AS pics
+        FROM feed A
+        INNER JOIN user B ON A.user_id = B.user_id
+        LEFT JOIN (
+        SELECT feed_id, COUNT(*) AS like_count
+        FROM likes
+        GROUP BY feed_id
+        ) C
+        ON A.feed_id = C.feed_id
+        LEFT JOIN feed_pic D
+        ON A.feed_id = D.feed_id
+        WHERE A.feed_id = #{feedId}
     </select>
 
     <update id="updFeed">
@@ -63,7 +100,7 @@
         WHERE feed_id = #{feedId} and user_id = #{userId}
     </update>
 
-    <select id="findUserIdByFeedId" resultType="long">
+    <select id="findUserIdByFeed">
         SELECT user_id
         FROM feed
         WHERE feed_id = #{feedId}

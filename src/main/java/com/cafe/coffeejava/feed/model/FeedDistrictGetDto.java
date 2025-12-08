@@ -1,14 +1,17 @@
 package com.cafe.coffeejava.feed.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
-public class FeedGetDto{
+public class FeedDistrictGetDto {
     @Schema(title = "피드 pk", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long feedId;
+    @JsonIgnore
+    private Long districtId;
     @Schema(title = "제목", example = "공부하기 좋은 카페입니다.", requiredMode = Schema.RequiredMode.REQUIRED)
     private String title;
     @Schema(title = "유저 닉네임", example = "나는홍길동", requiredMode = Schema.RequiredMode.REQUIRED)
