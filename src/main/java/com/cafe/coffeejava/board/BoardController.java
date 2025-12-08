@@ -1,12 +1,14 @@
 package com.cafe.coffeejava.board;
 
 import com.cafe.coffeejava.board.model.*;
+import com.cafe.coffeejava.common.model.Paging;
 import com.cafe.coffeejava.common.model.ResultResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,10 +33,10 @@ public class BoardController {
                 .build();
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping()
     @Operation(summary = "공지사항 목록 조회")
-    public ResultResponse<List<BoardGetRes>> getBoard(@PathVariable Long userId) {
-        List<BoardGetRes> result = boardService.getBoard(userId);
+    public ResultResponse<List<BoardGetRes>> getBoard(@ModelAttribute @ParameterObject Paging p) {
+        List<BoardGetRes> result = boardService.getBoard(p);
 
         return ResultResponse.<List<BoardGetRes>>builder()
                 .statusCode(String.valueOf(HttpServletResponse.SC_OK))
@@ -69,8 +71,8 @@ public class BoardController {
 
     @DeleteMapping("/{boardId}")
     @Operation(summary = "공지사항 삭제")
-    public ResultResponse<Integer> delBoard(@PathVariable Long boardId, @RequestParam Long userId) {
-        int result = boardService.delBoard(boardId, userId);
+    public ResultResponse<Integer> delBoard(@PathVariable Long boardId) {
+        int result = boardService.delBoard(boardId);
 
         return ResultResponse.<Integer>builder()
                 .statusCode(String.valueOf(HttpServletResponse.SC_NO_CONTENT))

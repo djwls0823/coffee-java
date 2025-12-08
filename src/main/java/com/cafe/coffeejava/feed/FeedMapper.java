@@ -1,9 +1,7 @@
 package com.cafe.coffeejava.feed;
 
-import com.cafe.coffeejava.feed.model.FeedGetDetailDto;
-import com.cafe.coffeejava.feed.model.FeedGetDto;
-import com.cafe.coffeejava.feed.model.FeedPostReq;
-import com.cafe.coffeejava.feed.model.FeedPutReq;
+import com.cafe.coffeejava.common.model.Paging;
+import com.cafe.coffeejava.feed.model.*;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -11,11 +9,12 @@ import java.util.List;
 @Mapper
 public interface FeedMapper {
     int insFeed(FeedPostReq p);
-    List<FeedGetDto> getFeedList();
-    List<FeedGetDto> getFeedListByDistrict(Long districtId);
-    List<FeedGetDetailDto> getFeedDetailList(Long feedId);
+    List<FeedGetDto> getFeedList(Paging p);
+    List<FeedGetDto> getFeedListByDistrict(FeedDistrictGetReq p);
+    FeedGetDetailDto getFeedDetailList(Long feedId);
     int updViewCount(Long feedId);
+    //int findUserIdByFeed(Long feedId);
     int updFeed(FeedPutReq p);
-    Long findUserIdByFeedId(Long feedId);
-    int delFeed(Long feedId, Long userId);
+    Long findUserIdByFeed(Long feedId);
+    int delFeed(Long feedId);
 }
