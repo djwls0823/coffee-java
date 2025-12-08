@@ -2,6 +2,7 @@ package com.cafe.coffeejava.feed;
 
 import com.cafe.coffeejava.common.MyFileUtils;
 import com.cafe.coffeejava.common.exception.CustomException;
+import com.cafe.coffeejava.common.model.Paging;
 import com.cafe.coffeejava.config.security.AuthenticationFacade;
 import com.cafe.coffeejava.feed.model.*;
 import lombok.Builder;
@@ -77,26 +78,58 @@ public class FeedService {
     }
 
     @Transactional
-    public List<FeedGetDto> feedGetResList() {
-        List<FeedGetDto> result = feedMapper.getFeedList();
+    public List<FeedGetDto> feedGetResList(Paging p) {
+        List<FeedGetDto> result = feedMapper.getFeedList(p);
         return result;
     }
 
     @Transactional
-    public List<FeedGetDto> feedGetListByDistrict(Long districtId) {
-        List<FeedGetDto> result = feedMapper.getFeedListByDistrict(districtId);
+    public List<FeedGetDto> feedGetListByDistrict(FeedDistrictGetReq p) {
+        if(p.getDistrictId() == null) {
+            throw new CustomException("잘못된 행정구역 ID 입니다.", HttpStatus.NOT_FOUND);
+        }
+
+        List<FeedGetDto> result = feedMapper.getFeedListByDistrict(p);
+        return result;
+    }
+
+    @Transactional
+    public FeedGetDetailDto feedGetDetail(Long feedId) {
+        if(feedId == null) {
+            throw new CustomException("게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        //조회수 증가
+        int updated = feedMapper.updViewCount(feedId);
+        if(updated == 0) {
+            throw new CustomException("게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+//        Long signedUserId = authenticationFacade.getSignedUserId();
+//        Long userId = feedMapper.findUserIdByFeedId(feedId);
+//
+//        //로그인 안한 경우 -> 조회 수 증가
+//        if(signedUserId == null) {
+//            feedMapper.updViewCount(feedId);
+//        }
+//
+//        //로그인 한 경우 + 본인 글이 아닌 경우 -> 조회 수 증가
+//        if(!signedUserId.equals(userId)) {
+//            feedMapper.updViewCount(feedId);
+//        }
+
+        FeedGetDetailDto result = feedMapper.getFeedDetailList(feedId);
         return result;
     }
 
     public int updFeed(FeedPutReq p) {
-        Long userId = authenticationFacade.getSignedUserId();
+        Long signedUserId = authenticationFacade.getSignedUserId();
         if(p.getFeedId() == null) {
             throw new CustomException("해당 피드가 없습니다.", HttpStatus.NOT_FOUND);
         }
         if(p.getUserId() == null) {
             throw new CustomException("유저 ID가 없습니다.", HttpStatus.NOT_FOUND);
         }
-        if(!userId.equals(p.getUserId())) {
+        if(!signedUserId.equals(p.getUserId())) {
             throw new CustomException("수정 권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
         if(p.getDistrictId() == null) {
@@ -105,21 +138,37 @@ public class FeedService {
         return feedMapper.updFeed(p);
     }
 
-    public int delFeed(Long feedId, Long userId) {
-        Long userIdByFeedId = feedMapper.findUserIdByFeedId(feedId);
-        Long signedUserId = authenticationFacade.getSignedUserId();
-
+    public int delFeed(Long feedId) {
         if(feedId == null) {
             throw new CustomException("해당 피드가 없습니다.", HttpStatus.NOT_FOUND);
         }
 
-        if(!signedUserId.equals(userId)) {
-            throw new CustomException("로그인된 사용자만 삭제할 수 있습니다.", HttpStatus.FORBIDDEN);
-        }
+        Long signedUserId = authenticationFacade.getSignedUserId();
+        Long userId = feedMapper.findUserIdByFeed(feedId);
 
-        if(!userIdByFeedId.equals(userId)) {
+        //이거 authentication 구조상 현재는 필요없음.
+//        if(signedUserId == null) {
+//            throw new CustomException("로그인이 필요합니다.", HttpStatus.FORBIDDEN);
+//        }
+
+        if(!signedUserId.equals(userId)) {
             throw new CustomException("삭제 권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
-        return feedMapper.delFeed(feedId, userId);
+        return feedMapper.delFeed(feedId);
+    }
+
+    public int delFeedPic(Long feedPicId) {
+        Long feedId = feedPicMapper.findFeedIdByFeedPic(feedPicId);
+        if(feedId == null) {
+            throw new CustomException("사진을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+
+        Long signedUserId = authenticationFacade.getSignedUserId();
+        Long userId = feedMapper.findUserIdByFeed(feedId);
+        if(!signedUserId.equals(userId)) {
+            throw new CustomException("사진 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        return feedPicMapper.delFeedPic(feedPicId);
     }
 }

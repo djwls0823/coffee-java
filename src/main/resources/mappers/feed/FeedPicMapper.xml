@@ -9,4 +9,15 @@
             #{feedId}, #{pic}
         </foreach>
     </insert>
+
+    <select id="findFeedIdByFeedPic">
+        SELECT feed_id
+        FROM feed_pic
+        WHERE feed_pic_id = #{feedPicId};
+    </select>
+
+    <delete id="delFeedPic">
+        DELETE FROM feed_pic
+        WHERE feed_pic_id = #{feedPicId}
+    </delete>
 </mapper>
