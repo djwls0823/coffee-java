@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cafe.coffeejava.likes.LikesMapper">
+    <!-- 좋아요 등록 -->
+    <insert id="insLikes">
+        INSERT INTO likes
+        SET user_id = #{userId}
+        , feed_id = #{feedId}
+    </insert>
+
+    <!-- 좋아요 삭제 -->
+    <delete id="delLikes">
+        DELETE FROM likes
+        WHERE user_id = #{userId}
+        AND feed_id = #{feedId}
+    </delete>
+
+    <!-- 좋아요 유무 확인 -->
+    <select id="existsLikes">
+        SELECT EXISTS (
+            SELECT *
+              FROM likes
+             WHERE user_id = #{userId}
+               AND feed_id = #{feedId}
+        )
+    </select>
+
+    <!-- 피드 존재 유무 확인 -->
+    <select id="existsFeed">
+        SELECT EXISTS (
+            SELECT *
+              FROM feed
+             WHERE feed_id = #{feedId}
+        )
+    </select>
+</mapper>
