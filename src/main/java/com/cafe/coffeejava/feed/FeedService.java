@@ -125,7 +125,7 @@ public class FeedService {
     }
 
     @Transactional
-    public int updFeed(FeedPutReq p, List<MultipartFile> pics, List<Long>feedPicId) {
+    public int updFeed(FeedPutReq p) {
         Long signedUserId = authenticationFacade.getSignedUserId();
         if (p.getFeedId() == null) {
             throw new CustomException("해당 피드가 없습니다.", HttpStatus.NOT_FOUND);
@@ -140,58 +140,6 @@ public class FeedService {
             throw new CustomException("행정구역 ID가 없습니다.", HttpStatus.NOT_FOUND);
         }
 
-        Long feedId = p.getFeedId();
-        String middlePath = String.format("feed/%d", feedId);
-
-        //삭제할 사진 처리
-        if(feedPicId != null && !feedPicId.isEmpty()) {
-
-            for (Long picId : feedPicId) {
-                //picName 찾기
-                String picName = feedPicMapper.findPicNameByFeedPicId(picId);
-                String baseDir = fileDirectory;
-                if (picName != null) {
-                    String filePath = String.format("%s/%s/%s", baseDir, middlePath, picName);
-                    try {
-                        myFileUtils.deleteFile(filePath);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            feedPicMapper.delFeedPicList(feedPicId);
-        }
-
-        //새 사진 추가
-        if(pics != null && !pics.isEmpty()) {
-            String basePath = fileDirectory; //절대경로
-            String folderPath = String.format("%s/%s", basePath, middlePath);
-
-            myFileUtils.makeFolders(folderPath);
-
-            List<String> picNameList = new ArrayList<>();
-            for(MultipartFile pic : pics) {
-                //새로운 파일명 생성
-                String savedPicName = myFileUtils.makeRandomFileName(pic);
-                picNameList.add(savedPicName);
-
-                //실제 파일 저장
-                String filePath = String.format("%s/%s", folderPath, savedPicName);
-                try {
-                    myFileUtils.transferTo(pic, filePath);
-                }catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            FeedPicDto feedPicDto = new FeedPicDto();
-            feedPicDto.setFeedId(feedId);
-            feedPicDto.setPics(picNameList);
-
-            feedPicMapper.insFeedPic(feedPicDto);
-        }
-
-        //피드 텍스트 수정
         return feedMapper.updFeed(p);
     }
 
@@ -199,11 +147,15 @@ public class FeedService {
     public int delFeed(Long feedId) {
 
         if (feedId == null) {
-            throw new CustomException("해당 피드가 없습니다.", HttpStatus.NOT_FOUND);
+            throw new CustomException("해당 피드가 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
         Long signedUserId = authenticationFacade.getSignedUserId();
         Long userId = feedMapper.findUserIdByFeed(feedId);
+
+        if(userId == null) {
+            throw new CustomException("해당 피드를 찾을 수 없습니다.",HttpStatus.NOT_FOUND);
+        }
 
         //이거 authentication 구조상 현재는 필요없음.
 //        if(signedUserId == null) {
@@ -215,35 +167,59 @@ public class FeedService {
         }
 
         String baseDir = fileDirectory;
-        String deletePath = String.format("%s/feed/%d",baseDir, feedId);
+        String deletePath = String.format("%s/feed/%d", baseDir, feedId);
         myFileUtils.deleteFolder(deletePath, true);
 
         return feedMapper.delFeed(feedId);
     }
 
     @Transactional
-    public int delFeedPic(Long feedPicId) {
-        Long feedId = feedPicMapper.findFeedIdByFeedPic(feedPicId);
-        String picName = feedPicMapper.findPicNameByFeedPicId(feedPicId);
-        if (feedId == null) {
+    public int delFeedPic(List<Long> feedPicIds) {
+        if (feedPicIds == null || feedPicIds.isEmpty()) {
+            throw new CustomException("삭제할 사진이 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        //사진들이 속한 feedId 조회(중복 제거)
+        List<Long> feedIds = feedPicMapper.findFeedIdsByFeedPicIds(feedPicIds);
+
+        if (feedIds.isEmpty()) {
             throw new CustomException("사진을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 
+        if(feedIds.size() > 1) {
+            throw new CustomException("서로 다른 게시글의 사진을 동시에 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        Long feedId = feedIds.get(0);
+
+        //권한 체크
         Long signedUserId = authenticationFacade.getSignedUserId();
         Long userId = feedMapper.findUserIdByFeed(feedId);
+
+        if(userId == null) {
+            throw new CustomException("해당 피드를 찾을 수 없습니다.",HttpStatus.NOT_FOUND);
+        }
+
         if (!signedUserId.equals(userId)) {
             throw new CustomException("사진 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
 
-        String baseDir = fileDirectory;
-        String filePath = String.format("%s/feed/%d/%s", baseDir, feedId, picName);
+        //삭제할 파일명 조회
+        List<String> picNames = feedPicMapper.findPicNamesByFeedPicIds(feedPicIds);
 
-        try {
-            myFileUtils.deleteFile(filePath);
-        } catch (IOException e) {
-            e.printStackTrace();
+        //파일 삭제
+        String baseDir = fileDirectory;
+        for(String picName : picNames) {
+            String filePath = String.format("%s/feed/%d/%s", baseDir, feedId, picName);
+
+            try {
+                myFileUtils.deleteFile(filePath);
+            } catch (IOException e) {
+                throw new CustomException("파일 삭제 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
 
-        return feedPicMapper.delFeedPic(feedPicId);
+        //DB삭제
+        return feedPicMapper.delFeedPics(feedPicIds);
     }
 }

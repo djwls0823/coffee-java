@@ -74,10 +74,8 @@ public class FeedController {
 
     @PutMapping()
     @Operation(summary = "게시글 수정")
-    public ResultResponse<Integer>updFeed(@RequestPart(value = "p") FeedPutReq p,
-                                          @RequestPart(value = "pics", required = false) List<MultipartFile> pics,
-                                          @RequestPart(value = "feedPicId", required = false) List<Long> feedPicId) {
-        int result = feedService.updFeed(p, pics, feedPicId);
+    public ResultResponse<Integer>updFeed(@RequestBody FeedPutReq p) {
+        int result = feedService.updFeed(p);
 
         return ResultResponse.<Integer>builder()
                 .statusCode(String.valueOf(HttpServletResponse.SC_OK))
@@ -98,10 +96,10 @@ public class FeedController {
                 .build();
     }
 
-    @DeleteMapping("feedPic/{feedPicId}")
-    @Operation(summary = "게시글 사진 삭제")
-    public ResultResponse<Integer>delFeedPic(@PathVariable Long feedPicId) {
-        int result = feedService.delFeedPic(feedPicId);
+    @DeleteMapping("/feedPics")
+    @Operation(summary = "게시글 사진 다중 삭제")
+    public ResultResponse<Integer>delFeedPic(@RequestParam List<Long> feedPicIds) {
+        int result = feedService.delFeedPic(feedPicIds);
 
         return ResultResponse.<Integer>builder()
                 .statusCode(String.valueOf(HttpServletResponse.SC_NO_CONTENT))

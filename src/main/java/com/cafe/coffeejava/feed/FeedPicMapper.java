@@ -8,8 +8,7 @@ import java.util.List;
 @Mapper
 public interface FeedPicMapper {
     int insFeedPic(FeedPicDto p);
-    Long findFeedIdByFeedPic(Long feedPicId);
-    String findPicNameByFeedPicId(Long feedPicId);
-    int delFeedPic(Long feedPicId);
-    List<Long> delFeedPicList(List<Long> feedPicId);
+    List<Long> findFeedIdsByFeedPicIds(List<Long> feedPicIds);
+    List<String> findPicNamesByFeedPicIds(List<Long> feedPicIds);
+    int delFeedPics(List<Long> feedPicIds);
 }
