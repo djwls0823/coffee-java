@@ -53,7 +53,7 @@ public class CommentService {
 
     // 댓글 수정
     public int patchComment(CommentPatchReq req, long commentId) {
-        long  loginUserId = authenticationFacade.getSignedUserId();
+        long loginUserId = authenticationFacade.getSignedUserId();
 
         CommentGetUserIdRes userIdFromComment = commentMapper.selUserIdFromComment(commentId);
 
@@ -66,6 +66,25 @@ public class CommentService {
         }
 
         int result = commentMapper.updComment(commentId, loginUserId, req.getFeedComment());
+
+        return result;
+    }
+
+    // 댓글 삭제
+    public int deleteComment(long commentId) {
+        long loginUserId = authenticationFacade.getSignedUserId();
+
+        CommentGetUserIdRes userIdFromComment = commentMapper.selUserIdFromComment(commentId);
+
+        if (userIdFromComment == null) {
+            throw new CustomException("존재하지 않는 댓글입니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (userIdFromComment.getUserId() != loginUserId) {
+            throw new CustomException("권한이 없는 요청입니다.", HttpStatus.FORBIDDEN);
+        }
+
+        int result = commentMapper.delComment(commentId, loginUserId);
 
         return result;
     }
