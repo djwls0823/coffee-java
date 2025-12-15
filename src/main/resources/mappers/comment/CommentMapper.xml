@@ -44,4 +44,10 @@
           FROM `comment`
          WHERE comment_id = #{commentId}
     </select>
+
+    <delete id="delComment">
+        DELETE FROM `comment`
+        WHERE comment_id = #{commentId}
+        AND user_id = #{userId}
+    </delete>
 </mapper>

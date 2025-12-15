@@ -56,4 +56,16 @@ public class CommentController {
                              .resultData(result)
                              .build();
     }
+
+    @DeleteMapping("/{commentId}")
+    @Operation(summary = "댓글 삭제")
+    public ResultResponse<Integer> deleteComment(@PathVariable long commentId) {
+        int result =  commentService.deleteComment(commentId);
+
+        return ResultResponse.<Integer>builder()
+                             .statusCode(String.valueOf(HttpServletResponse.SC_OK))
+                             .resultMsg("댓글 삭제 성공")
+                             .resultData(result)
+                             .build();
+    }
 }
