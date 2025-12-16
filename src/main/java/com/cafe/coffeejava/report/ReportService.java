@@ -3,10 +3,13 @@ package com.cafe.coffeejava.report;
 import com.cafe.coffeejava.common.exception.CustomException;
 import com.cafe.coffeejava.config.security.AuthenticationFacade;
 import com.cafe.coffeejava.report.model.ReportPostReq;
+import com.cafe.coffeejava.report.model.ReportTypeGetRes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +17,7 @@ public class ReportService {
     private final ReportMapper reportMapper;
     private final AuthenticationFacade authenticationFacade;
 
+    // 신고 등록
     @Transactional
     public int postReport(ReportPostReq req) {
         Long loginUserId = authenticationFacade.getSignedUserId();
@@ -43,5 +47,12 @@ public class ReportService {
         int result =  reportMapper.insReport(loginUserId, req);
 
         return result;
+    }
+
+    // 신고 유형 불러오기 (select box 용)
+    public List<ReportTypeGetRes> getReportType() {
+        List<ReportTypeGetRes> list = reportMapper.selReportType();
+
+        return list;
     }
 }

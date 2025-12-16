@@ -30,9 +30,9 @@
     <!-- 댓글 유무 확인 -->
     <select id="selCommentByCommentId">
         SELECT EXISTS (
-        SELECT *
-        FROM `comment`
-        WHERE comment_id = #{commentId}
+            SELECT *
+              FROM `comment`
+             WHERE comment_id = #{commentId}
         )
     </select>
 
@@ -40,19 +40,24 @@
     <select id="selDistrictReportByFeedId">
         SELECT EXISTS (
             SELECT *
-            FROM report
-            WHERE reporter_id = #{userId}
-            AND feed_id = #{feedId}
+              FROM report
+             WHERE reporter_id = #{userId}
+               AND feed_id = #{feedId}
         )
     </select>
 
     <!-- 댓글 중복 신고 검증 -->
     <select id="selDistrictReportByCommentId">
         SELECT EXISTS (
-        SELECT *
-        FROM report
-        WHERE reporter_id = #{userId}
-        AND comment_id = #{commentId}
+            SELECT *
+              FROM report
+             WHERE reporter_id = #{userId}
+               AND comment_id = #{commentId}
         )
+    </select>
+
+    <select id="selReportType">
+        SELECT report_type_id AS reportTypeId, report_type_name AS reportTypeName
+          FROM report_type
     </select>
 </mapper>
